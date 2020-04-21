@@ -25,8 +25,11 @@ const foreignKeyDecorator = 'ForeignKey';
  * @param {Dialect} dialect
  */
 export class ModelBuilder extends Builder {
+    protected self: typeof ModelBuilder;
+    
     constructor(config: IConfig, dialect: Dialect) {
         super(config, dialect);
+        this.self = new.target;
     }
 
     /**
@@ -34,7 +37,7 @@ export class ModelBuilder extends Builder {
      * @param {IColumnMetadata} col
      * @param {Dialect} dialect
      */
-    private static buildColumnPropertyDecl(col: IColumnMetadata, dialect: Dialect): ts.PropertyDeclaration {
+    protected static buildColumnPropertyDecl(col: IColumnMetadata, dialect: Dialect): ts.PropertyDeclaration {
 
         const buildColumnDecoratorProps = (col: IColumnMetadata): Partial<ModelAttributeColumnOptions> => {
             const props: Partial<ModelAttributeColumnOptions> = {
@@ -87,7 +90,7 @@ export class ModelBuilder extends Builder {
      * Build association class member
      * @param {IAssociationMetadata} association
      */
-    private static buildAssociationPropertyDecl(association: IAssociationMetadata): ts.PropertyDeclaration {
+    protected static buildAssociationPropertyDecl(association: IAssociationMetadata): ts.PropertyDeclaration {
         const { associationName, targetModel, joinModel } = association;
 
         const targetModels = [ targetModel ];
@@ -124,7 +127,7 @@ export class ModelBuilder extends Builder {
      * @param {ITableMetadata} tableMetadata
      * @param {Dialect} dialect
      */
-    private static buildTableClassDeclaration(tableMetadata: ITableMetadata, dialect: Dialect): string {
+    protected static buildTableClassDeclaration(tableMetadata: ITableMetadata, dialect: Dialect): string {
         const { originName: tableName, name, columns } = tableMetadata;
 
         const classDecl = ts.createClassDeclaration(
@@ -213,7 +216,7 @@ export class ModelBuilder extends Builder {
      * @param {ITableMetadata[]} tablesMetadata
      * @returns {string}
      */
-    private static buildIndexExports(tablesMetadata: ITablesMetadata): string {
+    protected static buildIndexExports(tablesMetadata: ITablesMetadata): string {
         return Object.values(tablesMetadata)
             .map(t =>  nodeToString(generateIndexExport(t.name)))
             .join('\n');
@@ -260,7 +263,7 @@ export class ModelBuilder extends Builder {
         // Build model files
         for (const tableMetadata of Object.values(tablesMetadata)) {
             console.log(`Processing table ${tableMetadata.originName}`);
-            const tableClassDecl = ModelBuilder.buildTableClassDeclaration(tableMetadata, this.dialect);
+            const tableClassDecl = this.self.buildTableClassDeclaration(tableMetadata, this.dialect);
 
             writePromises.push((async () => {
                 const outPath = path.join(outDir, `${tableMetadata.name}.ts`);
@@ -278,7 +281,7 @@ export class ModelBuilder extends Builder {
         // Build index file
         writePromises.push((async () => {
             const indexPath = path.join(outDir, 'index.ts');
-            const indexContent = ModelBuilder.buildIndexExports(tablesMetadata);
+            const indexContent = this.self.buildIndexExports(tablesMetadata);
 
             await fs.writeFile(
                 indexPath,
