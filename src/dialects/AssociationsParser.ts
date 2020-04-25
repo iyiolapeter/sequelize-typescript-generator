@@ -19,8 +19,10 @@ type AssociationRow = [
 export interface IAssociationMetadata {
     associationName: 'HasOne' | 'HasMany' | 'BelongsTo' | 'BelongsToMany';
     targetModel: string;
+    targetModelAlias: string;
     joinModel?: string;
     sourceKey?: string; // Left table key for HasOne and HasMany associations
+    foreignKey?: string;
 }
 
 export interface IForeignKey {
@@ -107,8 +109,8 @@ export class AssociationsParser {
                 cardinality,
                 leftKey,
                 rightKey,
-                leftModel,
-                rightModel,
+                leftModelDef,
+                rightModelDef,
                 joinModel
             ] = row;
 
@@ -116,6 +118,9 @@ export class AssociationsParser {
                 leftCardinality,
                 rightCardinality
             ] = cardinality.split(':');
+
+            const [leftModel,leftModelAlias = leftModelDef] = leftModelDef.split(':');
+            const [rightModel,rightModelAlias = rightModelDef] = rightModelDef.split(':');
 
             // Add entry for left table
             if (!associationsMetadata[leftModel]) {
@@ -138,12 +143,16 @@ export class AssociationsParser {
                 associationsMetadata[leftModel].associations.push({
                     associationName: rightCardinality === '1' ? 'HasOne' : 'HasMany',
                     targetModel: rightModel,
+                    targetModelAlias: rightModelAlias,
                     sourceKey: leftKey,
+                    foreignKey: rightKey
                 });
 
                 associationsMetadata[rightModel].associations.push({
                     associationName: 'BelongsTo',
                     targetModel: leftModel,
+                    targetModelAlias: leftModelAlias,
+                    foreignKey: rightKey
                 });
 
                 associationsMetadata[rightModel].foreignKeys.push({
@@ -164,12 +173,14 @@ export class AssociationsParser {
                 associationsMetadata[leftModel].associations.push({
                     associationName: 'BelongsToMany',
                     targetModel: rightModel,
+                    targetModelAlias: rightModelAlias,
                     joinModel: joinModel,
                 });
 
                 associationsMetadata[rightModel].associations.push({
                     associationName: 'BelongsToMany',
                     targetModel: leftModel,
+                    targetModelAlias: leftModelAlias,
                     joinModel: joinModel,
                 });
 
