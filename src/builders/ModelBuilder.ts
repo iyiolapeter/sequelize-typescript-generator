@@ -88,29 +88,32 @@ export class ModelBuilder extends Builder {
      * @param {IAssociationMetadata} association
      */
     private static buildAssociationPropertyDecl(association: IAssociationMetadata): ts.PropertyDeclaration {
-        const { associationName, targetModel, joinModel } = association;
+        const { associationName, targetModel, targetModelAlias, joinModel, sourceKey } = association;
 
         const targetModels = [ targetModel ];
         joinModel && targetModels.push(joinModel);
 
+        const decoratorOptions:Record<string, any> = {};
+        if(association.sourceKey) {
+            decoratorOptions.sourceKey = association.sourceKey
+        }
+        if(association.foreignKey) {
+            decoratorOptions.foreignKey = association.foreignKey
+        }
+        let associationDecorator;
+        if(decoratorOptions) {
+            associationDecorator = generateArrowDecorator(associationName, targetModels, decoratorOptions);
+        } else {
+            associationDecorator = generateArrowDecorator(associationName, targetModels);
+        }
+
         return ts.createProperty(
             [
-                ...(association.sourceKey ?
-                        [
-                            generateArrowDecorator(
-                                associationName,
-                                targetModels,
-                                { sourceKey: association.sourceKey }
-                            )
-                        ]
-                        : [
-                            generateArrowDecorator(associationName, targetModels)
-                        ]
-                ),
+                associationDecorator
             ],
             undefined,
             associationName.includes('Many') ?
-                pluralize.plural(targetModel) : pluralize.singular(targetModel),
+                pluralize.plural(targetModelAlias) : pluralize.singular(targetModelAlias),
             ts.createToken(ts.SyntaxKind.QuestionToken),
             associationName.includes('Many') ?
                 ts.createArrayTypeNode(ts.createTypeReferenceNode(targetModel, undefined)) :
@@ -194,6 +197,10 @@ export class ModelBuilder extends Builder {
         });
 
         [...importModels].forEach(modelName => {
+            // do not import current class
+            if(modelName === tableMetadata.name){
+                return;
+            }
             generatedCode += nodeToString(generateNamedImports(
                 [ modelName ],
                 `./${modelName}`
