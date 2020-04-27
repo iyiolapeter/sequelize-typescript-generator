@@ -328,7 +328,8 @@ export class TestRunner {
                             ...testMetadata.schema && { schema: testMetadata.schema.name },
                             case: {
                                 [TransformTarget.MODEL]: modelCase,
-                                [TransformTarget.COLUMN]: columnCase
+                                [TransformTarget.COLUMN]: columnCase,
+                                [TransformTarget.FOREIGN]: columnCase
                             },
                         },
                         output: {

@@ -10,6 +10,8 @@ export enum TransformTarget {
 
 export type TransformMap = {
     [key in TransformTarget]: TransformCase;
+} & {
+    foreign?: TransformCase;
 }
 
 export type TransformFn = (value: string, target: TransformTarget) => string;

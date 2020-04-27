@@ -56,15 +56,18 @@ const getTransformerForCase = (transformCase: TransformCase): CaseTransformer =>
 export const transformerFactory = (transformCase: TransformCase | TransformMap): TransformFn => {
     let modelTransformer: CaseTransformer;
     let columnTransformer: CaseTransformer;
+    let foreignTransformer: CaseTransformer;
 
     if (typeof transformCase === 'string') {
         const transformer = getTransformerForCase(transformCase as TransformCase);
         modelTransformer = transformer;
         columnTransformer = transformer;
+        foreignTransformer = transformer;
     }
     else {
         modelTransformer = getTransformerForCase(transformCase.model);
         columnTransformer = getTransformerForCase(transformCase.column);
+        foreignTransformer = getTransformerForCase(transformCase.foreign || transformCase.column);
     }
 
     return function(value: string, target: TransformTarget) {
@@ -75,6 +78,10 @@ export const transformerFactory = (transformCase: TransformCase | TransformMap):
 
         if (target === TransformTarget.MODEL) {
             return modelTransformer(value);
+        }
+
+        if (target as any === 'foreign') {
+            return foreignTransformer(value);
         }
 
         return columnTransformer(value);
@@ -122,6 +129,10 @@ export const caseTransformer = (
 
                 if (a.sourceKey) {
                     a.sourceKey = transformer(a.sourceKey, TransformTarget.COLUMN);
+                }
+
+                if (a.targetModelAlias) {
+                    a.targetModelAlias = transformer(a.targetModelAlias, "foreign" as any);
                 }
 
                 return a;
