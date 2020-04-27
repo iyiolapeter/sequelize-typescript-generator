@@ -15,7 +15,9 @@ import {
     generateNamedImports,
     generateObjectLiteralDecorator,
     generateIndexExport,
+    generateStringEnum,
 } from './utils';
+import { pascalCase } from 'change-case';
 
 const foreignKeyDecorator = 'ForeignKey';
 
@@ -37,8 +39,7 @@ export class ModelBuilder extends Builder {
      * @param {IColumnMetadata} col
      * @param {Dialect} dialect
      */
-    protected static buildColumnPropertyDecl(col: IColumnMetadata, dialect: Dialect): ts.PropertyDeclaration {
-
+    protected static buildColumnPropertyDecl(col: IColumnMetadata, dialect: Dialect, colType?: string): ts.PropertyDeclaration {
         const buildColumnDecoratorProps = (col: IColumnMetadata): Partial<ModelAttributeColumnOptions> => {
             const props: Partial<ModelAttributeColumnOptions> = {
                 ...col.originName && col.name !== col.originName && { field: col.originName },
@@ -81,7 +82,7 @@ export class ModelBuilder extends Builder {
             col.name,
             (col.autoIncrement || col.allowNull) ?
                 ts.createToken(ts.SyntaxKind.QuestionToken) : ts.createToken(ts.SyntaxKind.ExclamationToken),
-            ts.createTypeReferenceNode(dialect.mapDbTypeToJs(col.type) ?? 'any', undefined),
+            ts.createTypeReferenceNode(colType ?? dialect.mapDbTypeToJs(col.type) ?? 'any', undefined),
             undefined
         );
     }
@@ -132,7 +133,7 @@ export class ModelBuilder extends Builder {
      */
     protected static buildTableClassDeclaration(tableMetadata: ITableMetadata, dialect: Dialect): string {
         const { originName: tableName, name, columns } = tableMetadata;
-
+        const extras: any[] = [];
         const classDecl = ts.createClassDeclaration(
             [
                 // @Table decorator
@@ -161,7 +162,15 @@ export class ModelBuilder extends Builder {
             ],
             // Class members
             [
-                ...Object.values(columns).map(col => this.buildColumnPropertyDecl(col, dialect)),
+                ...Object.values(columns).map((col) => {
+                    if(col.type === 'enum'){
+                        const members = col.typeExt.match(/\(.*\)/)![0].replace(/[()]/g, '').replace(/[']/g, '').split(',');
+                        const enumName = `${name}${pascalCase(col.originName)}`;
+                        extras.push(generateStringEnum(enumName, members));
+                        return this.buildColumnPropertyDecl(col, dialect, enumName);
+                    }
+                    return this.buildColumnPropertyDecl(col, dialect)
+                }),
                 ...tableMetadata.associations && tableMetadata.associations.length ?
                     tableMetadata.associations.map(a => this.buildAssociationPropertyDecl(a)) : []
             ]
@@ -211,6 +220,14 @@ export class ModelBuilder extends Builder {
 
             generatedCode += '\n';
         });
+
+        if(extras.length){
+            for(let extra of extras){
+                generatedCode += '\n';
+                generatedCode += nodeToString(extra);
+                generatedCode += '\n';
+            }
+        }
 
         generatedCode += '\n';
         generatedCode += nodeToString(classDecl);

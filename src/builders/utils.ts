@@ -1,4 +1,5 @@
 import * as ts from 'typescript';
+import { snakeCase } from "change-case"
 
 const printer = ts.createPrinter({newLine: ts.NewLineKind.LineFeed});
 
@@ -123,3 +124,14 @@ export const generateArrowDecorator = (
         )
     );
 };
+
+export const generateStringEnum = (name: string, members: string[]) => {
+    const enumMembers = members.map((value) => {
+        let member = snakeCase(value);
+        if(!isNaN(member as any) || !isNaN(member[0] as any)){
+            member = `VAL_${member}`;
+        }
+        return ts.createEnumMember(member.toUpperCase(),ts.createStringLiteral(value));
+    });
+    return ts.createEnumDeclaration(undefined, [ts.createToken(ts.SyntaxKind.ExportKeyword)], name, enumMembers);
+}
