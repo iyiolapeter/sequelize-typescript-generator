@@ -48,6 +48,7 @@ export class ModelBuilder extends Builder {
                 ...col.allowNull && { allowNull: col.allowNull },
                 ...col.dataType && { type: col.dataType },
                 ...col.comment && { comment: col.comment },
+                ...col.defaultValue && { defaultValue: col.defaultValue },
             };
 
             return props;
@@ -186,6 +187,7 @@ export class ModelBuilder extends Builder {
                 'Column',
                 'DataType',
                 'Index',
+                'Sequelize',
                 foreignKeyDecorator,
                 ...new Set(tableMetadata.associations?.map(a => a.associationName)),
             ],
@@ -253,6 +255,10 @@ export class ModelBuilder extends Builder {
     async build(): Promise<void> {
         const { clean, outDir } = this.config.output;
         const writePromises: Promise<void>[] = [];
+
+        if (this.config.connection.logging) {
+            console.log('CONFIGURATION', this.config);
+        }
 
         console.log(`Fetching metadata from source`);
         const tablesMetadata = await this.dialect.buildTablesMetadata(this.config);

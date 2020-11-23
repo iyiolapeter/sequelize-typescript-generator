@@ -1,5 +1,5 @@
 import path from 'path';
-import { promises as fs } from 'fs';
+import fs from 'fs';
 import { Dialect as DialectType } from 'sequelize';
 import { Dialect } from '../dialects/Dialect';
 
@@ -43,7 +43,9 @@ export const aliasesMap = {
     SSL: 'ssl',
     PROTOCOL: 'protocol',
     ASSOCIATIONS_FILE: 'associations-file',
-    ENABLE_SEQUELIZE_LOGS: 'sequelize-logs',
+    ENABLE_SEQUELIZE_LOGS: 'logs',
+    DIALECT_OPTIONS: 'dialect-options',
+    DIALECT_OPTIONS_FILE: 'dialect-options-file',
 };
 
 /**
@@ -74,7 +76,53 @@ export const parseCase = (arg: string): TransformCase | TransformMap => {
     }
 
     return arg.toUpperCase() as TransformCase;
-}
+};
+
+/**
+ * Parse dialect options from json string
+ * @param {string} json
+ * @returns {object} Dialect options object
+ */
+const buildDialectOptionsFromString = (json: string): object => {
+    let parsed: object;
+
+    try {
+        parsed = JSON.parse(json);
+    }
+    catch(err) {
+        console.error(`Invalid json for argument --dialect-options`, err);
+        process.exit(1);
+    }
+
+    return parsed;
+};
+
+/**
+ * Parse dialect options from json file
+ * @param {string} path
+ * @returns {object} Dialect options object
+ */
+const buildDialectOptionsFromFile = (path: string): object => {
+    let content: string;
+    let parsed: object;
+
+    try {
+        content = fs.readFileSync(path).toString();
+    }
+    catch(err) {
+        error(`Argument -f [--dialect-options-file] '${path}' is not a valid path`);
+    }
+
+    try {
+        parsed = JSON.parse(content!);
+    }
+    catch(err) {
+        console.error(`Invalid json for argument --dialect-options`, err);
+        process.exit(1);
+    }
+
+    return parsed;
+};
 
 /**
  * Build config object from parsed arguments
@@ -100,6 +148,14 @@ export const buildConfig = (argv: ArgvType): IConfig => {
 
             ...argv[aliasesMap.DIALECT] === 'sqlite' && {
                 storage: argv[aliasesMap.STORAGE] ?? 'memory',
+            },
+
+            ...argv[aliasesMap.DIALECT_OPTIONS_FILE] && {
+                dialectOptions: buildDialectOptionsFromFile(argv[aliasesMap.DIALECT_OPTIONS_FILE]),
+            },
+
+            ...argv[aliasesMap.DIALECT_OPTIONS] && {
+                dialectOptions: buildDialectOptionsFromString(argv[aliasesMap.DIALECT_OPTIONS]),
             },
 
             logQueryParameters: true,
@@ -175,7 +231,7 @@ export const buildDialect = (argv: ArgvType): Dialect => {
  * @param { [key: string]: any } argv
  * @returns {void}
  */
-export const validateArgs = async (argv: ArgvType): Promise<void> => {
+export const validateArgs = (argv: ArgvType): void => {
     // Validate dialect
     if (!Dialect.dialects.has(argv[aliasesMap.DIALECT])) {
         error(`Required argument -D <dialect> must be one of (${Array.from(Dialect.dialects).join(', ')})`);
@@ -214,7 +270,7 @@ export const validateArgs = async (argv: ArgvType): Promise<void> => {
     // Validate lint file
     if (argv[aliasesMap.LINT_FILE]) {
         try {
-            await fs.access(argv[aliasesMap.LINT_FILE]);
+            fs.accessSync(argv[aliasesMap.LINT_FILE]);
         }
         catch(err) {
             error(`Argument -L [lint-file] '${argv[aliasesMap.LINT_FILE]}' is not a valid path`);
@@ -224,7 +280,7 @@ export const validateArgs = async (argv: ArgvType): Promise<void> => {
     // Validate associations file
     if (argv[aliasesMap.ASSOCIATIONS_FILE]) {
         try {
-            await fs.access(argv[aliasesMap.ASSOCIATIONS_FILE]);
+            fs.accessSync(argv[aliasesMap.ASSOCIATIONS_FILE]);
         }
         catch(err) {
             error(`Argument -a [associations-file] '${argv[aliasesMap.ASSOCIATIONS_FILE]}' is not a valid path`);
