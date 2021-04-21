@@ -37,7 +37,7 @@ export interface IColumnMetadata {
     autoIncrement: boolean;
     indices?: IIndexMetadata[],
     comment?: string;
-    // default?: ;
+    defaultValue?: any;
 }
 
 export interface IIndexMetadata {
@@ -88,7 +88,7 @@ export abstract class Dialect {
      * @param {IConfig} config
      * @returns {Promise<string[]>}
      */
-    protected abstract async fetchTables(
+    protected abstract fetchTables(
         connection: Sequelize,
         config: IConfig
     ): Promise<ITable[]>;
@@ -100,7 +100,7 @@ export abstract class Dialect {
      * @param {string} table
      * @returns {Promise<IColumnMetadata[]>}
      */
-    protected abstract async fetchColumnsMetadata(
+    protected abstract fetchColumnsMetadata(
         connection: Sequelize,
         config: IConfig,
         table: string
@@ -114,7 +114,7 @@ export abstract class Dialect {
      * @param {string} column
      * @returns {Promise<IIndexMetadata[]>}
      */
-    protected abstract async fetchColumnIndexMetadata(
+    protected abstract fetchColumnIndexMetadata(
         connection: Sequelize,
         config: IConfig,
         table: string,

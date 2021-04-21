@@ -101,7 +101,7 @@ const sequelizeDataTypesMap: { [key: string]: AbstractDataTypeConstructor } = {
     macaddr8: DataType.STRING,
     bit: DataType.STRING,
     varbit: DataType.STRING,
-    uuid: DataType.STRING,
+    uuid: DataType.UUID,
     xml: DataType.STRING,
     json: DataType.JSON,
     jsonb: DataType.JSONB,
@@ -296,6 +296,9 @@ export class DialectPostgres extends Dialect {
                 indices: [],
                 comment: column.description ?? undefined,
             };
+            if (column.column_default) {
+                columnMetadata.defaultValue = `Sequelize.literal("${column.column_default}")`;
+            }
 
             // Additional data type information
             switch (column.udt_name) {

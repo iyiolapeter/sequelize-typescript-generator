@@ -10,6 +10,7 @@
 * [Installation](#installation)
 * [CLI usage](#cli-usage)
 * [Programmatic usage](#programmatic-usage)
+* [Strict mode](#strict-mode)
 * [Transform case](#transform-case)
 * [Associations](#associations)
     * [One to One](#one-to-one)
@@ -30,38 +31,7 @@ Currently tested databases:
 - SQLite (3)
 
 ## Prerequisites
-Prerequisites are the same of the [sequelize-typescript](https://www.npmjs.com/package/sequelize-typescript#installation) library.
-In particular the following peer dependencies must be installed:
-
-- [typescript](https://www.npmjs.com/package/typescript)
-- [sequelize](https://www.npmjs.com/package/sequelize)
-- [@types/node](https://www.npmjs.com/package/@types/node)
-- [@types/validator](https://www.npmjs.com/package/@types/validator)
-- [@types/bluebird](https://www.npmjs.com/package/@types/bluebird)
-- [reflect-metadata](https://www.npmjs.com/package/reflect-metadata)
-- [sequelize-typescript](https://www.npmjs.com/package/sequelize-typescript)
-
-Local install:
-```shell
-npm install -S typescript @types/node @types/validator @types/bluebird reflect-metadata sequelize sequelize-typescript
-```
-
-Or if you intend to use the library globally:
-```shell
-npm install -g typescript @types/node @types/validator @types/bluebird reflect-metadata sequelize sequelize-typescript
-```
-
-Your `tsconfig.json` file needs the following flags:
-
-```json
-{
-    "compilerOptions": {
-        "target": "es6",
-        "experimentalDecorators": true,
-        "emitDecoratorMetadata": true   
-    }
-}
-```
+See [sequelize-typescript installation](https://www.npmjs.com/package/sequelize-typescript#installation).
 
 You should also install the specific driver library for your database, see 
 [sequelize documentation](https://sequelize.org/v5/manual/getting-started.html):
@@ -73,17 +43,8 @@ npm install -S sqlite3 # SQLite
 npm install -S tedious # Microsoft SQL Server
 ```
 
-Or if you intend to use the library globally:
-```shell
-npm install -g pg pg-hstore # Postgres
-npm install -g mysql2 # MySQL
-npm install -g mariadb # MariaDB
-npm install -g sqlite3 # SQLite
-npm install -g tedious # Microsoft SQL Server
-```
-
 ## Installation
-Local install:
+Local install
 ```shell
 npm install -S sequelize-typescript-generator
 ```
@@ -124,63 +85,68 @@ Usage: stg -D <dialect> -d [database] -u [username] -x [password] -h [host] -p
 [protocol] -c [clean]
 
 Options:
-  --help                   Show help                                   [boolean]
-  --version                Show version number                         [boolean]
-  -h, --host               Database IP/hostname                         [string]
-  -p, --port               Database port. Defaults:
-                           - MySQL/MariaDB: 3306
-                           - Postgres: 5432
-                           - MSSQL: 1433                                [number]
-  -d, --database           Database name                                [string]
-  -s, --schema             Schema name (Postgres only)                  [string]
-  -D, --dialect            Dialect:
-                           - postgres
-                           - mysql
-                           - mariadb
-                           - sqlite
-                           - mssql                           [string] [required]
-  -u, --username           Database username                            [string]
-  -x, --password           Database password                            [string]
-  -t, --tables             Comma-separated names of tables to process   [string]
-  -T, --skip-tables        Comma-separated names of tables to skip      [string]
-  -i, --indices            Include index annotations in the generated models
+  --help                      Show help                                [boolean]
+  --version                   Show version number                      [boolean]
+  -h, --host                  Database IP/hostname                      [string]
+  -p, --port                  Database port. Defaults:
+                              - MySQL/MariaDB: 3306
+                              - Postgres: 5432
+                              - MSSQL: 1433                             [number]
+  -d, --database              Database name                             [string]
+  -s, --schema                Schema name (Postgres only)               [string]
+  -D, --dialect               Dialect:
+                              - postgres
+                              - mysql
+                              - mariadb
+                              - sqlite
+                              - mssql                        [string] [required]
+  -u, --username              Database username                         [string]
+  -x, --password              Database password                         [string]
+  -t, --tables                Comma-separated names of tables to process[string]
+  -T, --skip-tables           Comma-separated names of tables to skip   [string]
+  -i, --indices               Include index annotations in the generated models
                                                                        [boolean]
-  -o, --out-dir            Output directory. Default:
-                           - output-models                              [string]
-  -c, --clean              Clean output directory before running       [boolean]
-  -m, --timestamps         Add default timestamps to tables            [boolean]
-  -C, --case               Transform tables and fields names
-                           with one of the following cases:
-                           - underscore
-                           - camel
-                           - upper
-                           - lower
-                           - pascal
-                           - const
-                           You can also specify a different
-                           case for model and columns using the
-                           following format:
-                           <model case>:<column case>
-
+  -o, --out-dir               Output directory. Default:
+                              - output-models                           [string]
+  -c, --clean                 Clean output directory before running    [boolean]
+  -m, --timestamps            Add default timestamps to tables         [boolean]
+  -C, --case                  Transform tables and fields names
+                              with one of the following cases:
+                              - underscore
+                              - camel
+                              - upper
+                              - lower
+                              - pascal
+                              - const
+                              You can also specify a different
+                              case for model and columns using
+                              the following format:
+                              <model case>:<column case>
                                                                         [string]
-  -S, --storage            SQLite storage. Default:
-                           - memory                                     [string]
-  -L, --lint-file          ES Lint file path                            [string]
-  -l, --ssl                Enable SSL                                  [boolean]
-  -r, --protocol           Protocol used: Default:
-                           - tcp                                        [string]
-  -a, --associations-file  Associations file path                       [string]
-  -g, --sequelize-logs     Enable Sequelize logs                       [boolean]
+  -S, --storage               SQLite storage. Default:
+                              - memory                                  [string]
+  -L, --lint-file             ES Lint file path                         [string]
+  -l, --ssl                   Enable SSL                               [boolean]
+  -r, --protocol              Protocol used: Default:
+                              - tcp                                     [string]
+  -a, --associations-file     Associations file path                    [string]
+  -g, --logs                  Enable Sequelize logs                    [boolean]
+  -n, --dialect-options       Dialect native options passed as json string.
+                                                                        [string]
+  -f, --dialect-options-file  Dialect native options passed as json file path.
+                                                                        [string]
+  -R, --no-strict             Disable strict typescript class declaration.
+                                                                       [boolean]                                                                        
 ```
 
 Local usage example:
 ```shell
-npx stg -D mysql -h localhost -p 3306 -d myDatabase -u myUsername -x myPassword --indices --case camel --out-dir models --clean 
+npx stg -D mysql -h localhost -p 3306 -d myDatabase -u myUsername -x myPassword --indices --dialect-options-file path/to/dialectOptions.json --case camel --out-dir models --clean 
 ```
 
 Global usage example:
 ```shell
-stg -D mysql -h localhost -p 3306 -d myDatabase -u myUsername -x myPassword --indices --case camel --out-dir models --clean 
+stg -D mysql -h localhost -p 3306 -d myDatabase -u myUsername -x myPassword --indices --dialect-options-file path/to/dialectOptions.json --case camel --out-dir models --clean 
 ```
 
 ## Programmatic usage
@@ -204,7 +170,8 @@ import { IConfig, ModelBuilder, DialectMySQL } from 'sequelize-typescript-genera
         output: {
             clean: true,
             outDir: 'models'
-        }
+        },
+        strict: true,
     };
 
     const dialect = new DialectMySQL();
@@ -220,6 +187,128 @@ import { IConfig, ModelBuilder, DialectMySQL } from 'sequelize-typescript-genera
     }    
 })();
 ```
+
+## Strict mode
+By default strict mode will be used for models class declaration:
+
+`STRICT ENABLED`
+```ts
+import {
+	Model, Table, Column, DataType, Index, Sequelize, ForeignKey, HasOne 
+} from "sequelize-typescript";
+import { passport } from "./passport";
+
+interface personAttributes {
+    person_id: number;
+    name: string;
+    passport_id: number;
+}
+
+@Table({
+	tableName: "person",
+	timestamps: false 
+})
+export class person extends Model<personAttributes, personAttributes> implements personAttributes {
+
+    @Column({
+    	primaryKey: true,
+    	type: DataType.INTEGER 
+    })
+    @Index({
+    	name: "PRIMARY",
+    	using: "BTREE",
+    	order: "ASC",
+    	unique: true 
+    })
+    person_id!: number;
+
+    @Column({
+    	type: DataType.STRING(80) 
+    })
+    name!: string;
+
+    @Column({
+    	type: DataType.INTEGER 
+    })
+    passport_id!: number;
+
+    @HasOne(() => passport, {
+    	sourceKey: "person_id" 
+    })
+    passport?: passport;
+
+}
+```
+
+You can disable strict mode from both CLI or programmatically:
+
+```shell
+npx stg -D mysql -d myDatabase --no-strict  
+```
+
+```ts
+const config: IConfig = {
+    connection: {
+        dialect: 'mysql',
+        database: 'myDatabase',
+        username: 'myUsername',
+        password: 'myPassword'
+    },
+    metadata: {
+        indices: true,
+        case: 'CAMEL',
+    },
+    output: {
+        clean: true,
+        outDir: 'models'
+    },
+    strict: false,
+};
+```
+
+`STRICT DISABLED`
+```ts
+import {
+	Model, Table, Column, DataType, Index, Sequelize, ForeignKey, HasOne 
+} from "sequelize-typescript";
+import { passport } from "./passport";
+
+@Table({
+	tableName: "person",
+	timestamps: false 
+})
+export class person extends Model {
+
+    @Column({
+    	primaryKey: true,
+    	type: DataType.INTEGER 
+    })
+    @Index({
+    	name: "PRIMARY",
+    	using: "BTREE",
+    	order: "ASC",
+    	unique: true 
+    })
+    person_id!: number;
+
+    @Column({
+    	type: DataType.STRING(80) 
+    })
+    name!: string;
+
+    @Column({
+    	type: DataType.INTEGER 
+    })
+    passport_id!: number;
+
+    @HasOne(() => passport, {
+    	sourceKey: "person_id" 
+    })
+    passport?: passport;
+
+}
+```
+
 
 ## Transform case
 You can transform table name and fields with one of the following cases:
@@ -389,7 +478,7 @@ import { passport } from "./passport";
 	timestamps: false,
 	comment: "" 
 })
-export class person extends Model<person> {
+export class person extends Model {
 
     @Column({
     	field: "person_id",
@@ -439,7 +528,7 @@ import { person } from "./person";
 	timestamps: false,
 	comment: "" 
 })
-export class passport extends Model<passport> {
+export class passport extends Model {
 
     @ForeignKey(() => person)
     @Column({
@@ -523,7 +612,7 @@ import { units } from "./units";
 	timestamps: false,
 	comment: "" 
 })
-export class races extends Model<races> {
+export class races extends Model {
 
     @Column({
     	field: "race_id",
@@ -561,7 +650,7 @@ import { races } from "./races";
 	timestamps: false,
 	comment: "" 
 })
-export class units extends Model<units> {
+export class units extends Model {
 
     @Column({
     	field: "unit_id",
@@ -659,7 +748,7 @@ import { authors_books } from "./authors_books";
 	timestamps: false,
 	comment: "" 
 })
-export class authors extends Model<authors> {
+export class authors extends Model {
 
     @Column({
     	field: "author_id",
@@ -698,7 +787,7 @@ import { authors_books } from "./authors_books";
 	timestamps: false,
 	comment: "" 
 })
-export class books extends Model<books> {
+export class books extends Model {
 
     @Column({
     	field: "book_id",
@@ -737,7 +826,7 @@ import { books } from "./books";
 	timestamps: false,
 	comment: "" 
 })
-export class authors_books extends Model<authors_books> {
+export class authors_books extends Model {
 
     @ForeignKey(() => authors)
     @Column({
